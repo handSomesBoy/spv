@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--head部分-->
+<head th:replace="layoutSet :: htmlhead" th:with="title=''">
+</head>
+<body>
+<link rel="stylesheet"  th:href="@{/framework/css/login.css}" />
+<script th:src="@{/framework/js/login/TweenLite.min.js}"></script>
+<script th:src="@{/framework/js/login/EasePack.min.js}"></script>
+<script th:src="@{/framework/js/login/rAF.js}"></script>
+<script th:src="@{/framework/js/login/starLogin.js}"></script>
+<script th:src="@{/framework/js/checkParam.js}"></script>
+<script th:src="@{/framework/js/login/validateCode.js}"></script>
+<div id="app">
+    <div id="large-header" class="large-header">
+        <canvas id="demo-canvas"></canvas>
+        <div class="logo_box">
+            <div class="log_header"></div>
+            <form action="login" name="f" method="post" class="forms">
+                <input type="hidden" name="fullScreenFlag"/>
+                <input type="hidden" name="validateCode"/>
+                <input type="hidden" name="sessionKey"/>
+                <input type="hidden" name="identity"/>
+                <input type="hidden" name="ticket"/>
+                <div class="input_outer">
+                    <span class="u_user u_"></span>
+                    <input id="username"  class="text"  type="text" v-model="username" placeholder="请输入账户" onkeydown = "if(event.keyCode==13) {moveNext('password');}  ">
+                </div>
+                <div class="input_outer">
+                    <span class="u_password  u_"></span>
+                    <input id="password"  class="text" v-model="password" type="password" placeholder="请输入密码"  onkeydown = "if(event.keyCode==13) {moveNext('submit');}  ">
+                </div>
+                <div class="input_outer">
+                    <span class="u_validateCode  u_"></span>
+                    <input id="code"  class="text" v-model="code" style="position:absolute;" value="" type="text" placeholder="请输入验证码"  onkeydown = "if(event.keyCode==13) {moveNext('submit');}  ">
+                    <canvas id="canvas" width="120" height="38" style="margin-left: 350px" @click="picReload"></canvas>
+                </div>
+                <div><a id="submit" class="act-but submit" @click="login"  onkeydown="if(event.keyCode==13) { alert(1);this.login();} ">登录</a></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+
+function moveNext(id){
+    if(id=='password')
+        $(password).focus();
+    if(id=='submit')
+        $(submit).focus();
+}
+var vue = new Vue({
+    el: "#app",
+    data: {
+        picCode: '',
+        username: '',
+        password: '',
+        code: ''
+    },
+    mounted: function()  {
+        this.picCode=drawPic();
+        initMovePic();//鼠标特效
+    },
+    methods: {
+            login: function() {
+                if(this.checkParams()!=false){
+                //表单提交的方法、比如ajax提交
+                $.ajax({
+                    type: "POST",
+                    url: ctx + "loginCheck",
+                    data: {
+                        "username": this.username,
+                        "password": this.password,
+                        "code": this.code
+                    },
+                    dataType: "json",
+                    success: function (data) {
+                        if (data.code == "1000") {
+                            var storage=window.localStorage;
+                            storage.setItem("userView",JSON.stringify(data.obj));
+                            window.location.href = ctx + "home";
+                        } else {
+                            vue.$message({
+                                showClose: true,
+                                message: data.message,
+                                type: 'warning'
+                            });
+                        }
+                    }
+                });
+                }
+            },
+            checkParams: function() {
+                //  校验
+                var username=this.username;
+                var password=this.password;
+                var code=this.code;
+                var  vailidateName=ValidateUtils.checkUserName(username);
+                var  vailidatePassword=ValidateUtils.checkSimplePassword(password);
+                if("ok"!=vailidateName || "ok"!=vailidatePassword){
+                    this.$message({
+                        showClose: true,
+                        message: '请您输入正确的用户名和密码',
+                        type: 'warning'
+                    });
+                    return false;
+                }
+                if(picCode.toLowerCase()!=code.toLowerCase()){
+                    this.$message({
+                        showClose: true,
+                        message: '请您输入正确的验证码',
+                        type: 'warning'
+                    });
+                    return false;
+                }
+            },
+        picReload: function() {
+            drawPic();
+        }
+        }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<!--vue ui 主页-->
+<!--head部分-->
+<head th:replace="layoutSet :: htmlhead" th:with="title=''">
+</head>
+<style>
+
+.el-aside {
+    background-color: rgb(105, 114, 123);
+}
+
+.el-tabs__header {
+    margin: 0 0 0px;
+}
+.el-menu {
+    border:0px;
+}
+.headLogoC{
+    height: 60px;
+    width: 600px;
+    //position: absolute;
+    //top: 0;
+    //left: 0;
+    background: url(img/main/head_logo.png) left center no-repeat;
+    background-size: 100%;
+}
+        .headOutC{
+            font-size: 30px;
+        }
+        .headOutC:hover{
+            background-color: burlywood;
+        }
+        #logout {
+            background-image: url(img/main/exit_b.png);
+        }
+        #logout:hover
+        { background-image: url(img/main/exit_w.png); }
+        .top-bar-btn:hover
+        { background-color:#565656; }
+        .top-bar-btn {
+            height: 60px;
+            width: 60px;
+            position: relative;
+            float: right;
+            border-left: 1px solid rgba(0, 0, 0, 0);
+            background-position: center;
+            background-repeat: no-repeat;
+            cursor: pointer;
+            transition: all .3s;
+
+        }
+        .el-submenu .el-menu-item {
+            min-width: 180px;
+        }
+.el-tabs--card>.el-tabs__header {
+            border-top: 1px solid #e4e7ed;
+            background: linear-gradient(to bottom, #fff, #f9f9f9);
+            border-bottom: 1px solid rgba(0, 0, 0, .1);
+}
+        .el-tabs--card>.el-tabs__header .el-tabs__nav {
+            border: 1px solid #e4e7ed;
+            border-bottom: none;
+            border-top: none;
+            border-radius: 0;
+        }
+        .el-tabs--card>.el-tabs__header .el-tabs__item.is-active {
+            border-bottom-color: #3397ef;
+        }
+        .el-tabs--card>.el-tabs__header .el-tabs__item {
+            border-bottom: 2px solid transparent;
+        }
+        .footC{
+            height: 30px;
+            border-top: 1px solid #e4e7ed;
+            background: linear-gradient(to bottom, #fff, #f9f9f9);
+            border-bottom: 1px solid rgba(0, 0, 0, .1);
+        }
+
+    .el-tabs--top{
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+    }
+    .el-tabs__content{
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+    }
+    .el-tab-pane{
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+    }
+    iframe{
+        flex: 1 1 auto;
+    }
+.u_{
+    width: 25px;
+    height: 25px;
+    background: url(img/login/login_ico.png);
+    position: absolute;
+    background-position: -125px 0;
+    padding-left: 30px;
+}
+</style>
+
+<body style="display: none">
+<div id="app" v-loading="fullscreenLoading"  element-loading-text="拼命加载中" element-loading-background="rgba(255, 255, 255, 1)">
+    <el-container style="height: 100%" >
+        <el-header>
+            <el-row type="flex" justify="start" align="middle">
+                <el-col :span="12"  >
+                    <div class="headLogoC"></div>
+                </el-col>
+                <el-col :span="12">
+                    <el-row type="flex" justify="space-between" align="middle">
+                        <el-col :span="20" type="flex" justify="center" align="middle"><span class="u_"><shiro:principal property="username"></shiro:principal></span></el-col>
+                        <el-col :span="2">
+                            <el-switch
+                                v-model="isCollapse"
+                                active-color="#13ce66"
+                                inactive-color="#ff4949" @change="asideChange">
+                            </el-switch>
+                        </el-col>
+                        <el-col :span="2" type="flex" justify="center" align="middle" >
+                         <!-- <i class="headOutC el-icon-circle-close-outline"  ></i>-->
+                            <a id="logout" class="top-bar-btn" th:href="@{logout}" ></a>
+                        </el-col>
+                    </el-row>
+                </el-col>
+            </el-row>
+
+        </el-header>
+        <el-container>
+            <el-aside :width="sideW" >
+                <el-menu
+                        default-active="2"
+                        class="el-menu-vertical-demo"
+                        @open="handleOpen"
+                        @close="handleClose"
+                        background-color="#545c64"
+                        text-color="#fff"
+                        active-text-color="#ffd04b" style=""
+                        :collapse="!isCollapse" @select="addTab">
+                    <!--示例仅实现两级菜单-->
+                    <label v-for="navMenu in menus" >
+                        <el-menu-item v-if="navMenu.children.length==0"
+                                      :key="navMenu.id" :data="navMenu" :index="navMenu.name" :route="navMenu.page"
+                                      disabled="false"
+                        >
+                            <i :class="navMenu.icon"></i>
+                            <span slot="title" v-text="navMenu.descpt"></span>
+                            <!--<span slot="title">{{navMenu.state=="true"?false:true}}</span>-->
+                        </el-menu-item>
+                        <el-submenu v-if="navMenu.children.length>0"
+                                    :key="navMenu.id" :data="navMenu" :index="navMenu.name">
+                            <template slot="title">
+                                <i :class="navMenu.icon"></i>
+                                <span v-text="navMenu.descpt"> </span>
+                            </template>
+                            <label v-for="navMenu2 in navMenu.children">
+                                <el-menu-item v-if="navMenu2.children.length==0"
+                                              :key="navMenu2.id" :data="navMenu2" :index="navMenu2.name" :route="navMenu2.page"
+                                              :disabled="!navMenu2.state">
+                                    <i :class="navMenu2.icon"></i>
+                                    <span slot="title" v-text="navMenu2.descpt"></span>
+                                </el-menu-item>
+                                <!--<el-submenu v-if="navMenu.children.length>0"
+                                            :key="navMenu.id" :data="navMenu" :index="navMenu.name">
+                                    <template slot="title">
+                                        <i :class="navMenu.icon"></i>
+                                        <span> {{navMenu.descpt}}</span>
+                                    </template>
+                                </el-submenu>-->
+                            </label>
+                        </el-submenu>
+                    </label>
+                    <!--//原生示例-->
+                    <!--<el-submenu index="1">
+                        <template slot="title">
+                            <i class="el-icon-location"></i>
+                            <span>案例</span>
+                        </template>
+                            <el-menu-item index="1-1">空</el-menu-item>
+                            <el-menu-item index="/spUnit">vueUI</el-menu-item>
+                            <el-menu-item index="/learn">bootsr</el-menu-item>
+                    </el-submenu>
+                    <el-menu-item index="2">
+                        <i class="el-icon-menu"></i>
+                        <span slot="title">导航二</span>
+                    </el-menu-item>
+                    <el-menu-item index="3" disabled>
+                        <i class="el-icon-document"></i>
+                        <span slot="title">导航三</span>
+                    </el-menu-item>
+                    <el-menu-item index="4">
+                        <i class="el-icon-setting"></i>
+                        <span slot="title">导航四</span>
+                    </el-menu-item>-->
+                </el-menu>
+            </el-aside>
+            <el-container>
+                <el-main>
+                    <el-tabs v-model="istab" type="card"  @tab-remove="removeTab" @tab-click="clickTab">
+                        <el-tab-pane
+                                label="主页"
+                                name="main"
+                                :closable="false"
+                        >
+                            <span slot="label"><i class="el-icon-upload" style="font-size: 20px"> </i></span>
+                            <iframe id="mainPage" src="mainPage"   width="100%"  :height="contentH" frameborder='0' scrolling="no"></iframe>
+
+                        </el-tab-pane>
+                        <el-tab-pane
+                                v-for="(item, index) in tabs"
+                                :key="item.name"
+                                :label="item.title"
+                                :name="item.name"
+                                :closable="item.close"
+                                style=" display: flex;
+    flex-direction:column;
+    flex:1 1 auto;"
+
+                        >
+                          <!--  <iframe id="mainIframe" :src="item.url"   width="100%"  :height="contentH" frameborder='0' scrolling="no"></iframe>
+-->
+                            <iframe id="mainIframe" :src="item.url"   width="100%"  height="100%" frameborder='0' :scrolling="item.scrollingType" marginheight="0" marginwidth="0" hspace="0" vspace="0"></iframe>
+                        </el-tab-pane>
+
+                    </el-tabs>
+
+                </el-main>
+                <el-footer class="footC" style="height: 30px"></el-footer>
+            </el-container>
+        </el-container>
+    </el-container>
+</div>
+<script>
+    var vue = new Vue({
+        el:"#app",
+        data: {
+            isCollapse:true,//菜单默认
+            contentH: '0px',//
+            sideW:'180px',
+            istab: 'main',//当前tab name
+            tabs: [],
+            menus:[],
+            menuc:{},
+            fullscreenLoading: true
+        },
+        mounted() {
+            let h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight; //浏览器高度
+            this.contentH=(h-137)+  'px';//计算功能区大小
+            /*获取菜单*/
+            let url='sysMenu/queryMenu';
+            this.$http.post(url,{}).then(function(res){
+                this.menus=res.data;
+                this.fullscreenLoading = false;
+            },function(){
+                console.log('failed');
+            });
+           //
+           //setTimeout(() => {
+            //    this.fullscreenLoading = false;
+           // }, 2000);
+        },
+        methods: {
+            handleOpen(key, keyPath) {
+                //console.log(key, keyPath);
+            },
+            handleClose(key, keyPath) {
+                // console.log(key, keyPath);
+            },
+            addTab( index,targetName) {
+                this.menuc={};
+                this.menuSelect(this.menus,index);
+                if(this.istab==this.menuc.name)
+                {
+                   return;
+                }
+                if(this.tabs.filter(tab => tab.name == this.menuc.name).length>0)
+                {
+                    this.istab=this.menuc.name;
+                    return;
+                }
+                var scrollingType;//根据url 定 是否可以滚动
+                if(this.menuc.page.indexOf("druid")>=-1||this.menuc.page.indexOf("swagger")>=-1){
+                    scrollingType="auto";
+                }else {
+                    scrollingType="no";
+                }
+                this.tabs.push({
+                    title: this.menuc.descpt,
+                    name: this.menuc.name,
+                    url:this.menuc.page,
+                    close:true,
+                    scrollingType: scrollingType
+                });
+                this.istab = this.menuc.name;
+            },
+            removeTab(targetName) {
+                let tabs = this.tabs;
+                let activeName = this.istab;
+                if (activeName === targetName) {
+                    tabs.forEach((tab, index) => {
+                        if (tab.name === targetName) {
+                            let nextTab = tabs[index + 1] || tabs[index - 1];
+                            if (nextTab) {
+                                activeName = nextTab.name;
+                            }else
+                            {
+                                activeName='main';
+                            }
+                        }
+                    });
+                }
+                this.istab = activeName;
+                this.tabs = tabs.filter(tab => tab.name !== targetName);
+            },
+            clickTab(targetName) {
+            },
+            asideChange(){
+                if(!this.isCollapse)
+                {
+                    this.sideW='64px';
+                }else{
+                    this.sideW='180px';
+                }
+            },
+            /*没找到直接查询所选菜单url的方法，通过唯一名称递归去查询*/
+            menuSelect(menus,index){
+                if(Array.isArray(menus)){
+                    for( let navMenu of menus){
+                        if(navMenu.name==index)
+                        {
+                            this.menuc=navMenu;
+                            break;
+                        }
+                        this.menuSelect(navMenu.children,index)
+                    }
+                }else{
+                    if(menus.name==index)
+                    {
+                        this.menuc=menus;
+                    }
+                }
+                // console.log( this.menus.filter(item => item.id === 6));
+            }
+        },
+    });
+    // 解决页面刷新 存在的视觉残留 等页面出来再显示
+    document.onreadystatechange = function () {
+        //debugger;
+        //console.log(">>>.",document.readyState);
+        if (document.readyState == "complete") {
+            document.body.style.display = "block";
+        } else {
+            document.body.style.display = "none";
+        };
+    };
+</script>
+</body>
+</html>

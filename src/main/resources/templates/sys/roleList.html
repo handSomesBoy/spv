@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head th:include="layoutSet :: htmlhead" th:with="title='角色管理'"></head>
+<style>
+</style>
+<body>
+<div id="app">
+    <el-container style="height: 100%" direction="vertical">
+        <el-header height="50px" style="margin: 10px;">
+            <el-form :inline="true" :model="condition" class="demo-form-inline" label-width="80px">
+                <el-form-item label="角色名称:">
+                    <el-input v-model="condition.roleName" placeholder="角色名称" clearable></el-input>
+                </el-form-item>
+                <el-form-item label="角色编号:">
+                    <el-input v-model="condition.code" placeholder="角色编号" clearable></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
+                    <el-button icon="el-icon-plus" @click="add">新增</el-button>
+                    <el-button icon="el-icon-delete" @click="deleteIds">停用</el-button>
+                </el-form-item>
+            </el-form>
+        </el-header>
+        <el-main>
+            <el-table
+                    ref="testTable"
+                    :data="tableData"
+                    style="width:100%"
+                    border
+                    :default-sort="{prop: 'roleName', order: 'ascending'}"
+                    @selection-change="handleSelectionChange"
+                    :row-class-name="tableRowClassName"
+                    height="100%"
+                    highlight-current-row
+                    size="small "
+            >
+                <el-table-column type="selection">
+                </el-table-column>
+                <el-table-column
+                        prop="roleName"
+                        label="角色名称"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="code"
+                        label="角色编号"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="descpt"
+                        label="角色说明"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="insertTime"
+                        label="创建时间"
+                        :formatter="dateFormat"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="updateTime"
+                        label="修改时间"
+                        :formatter="dateFormat"
+                        sortable>
+                    </tempEntitylate>
+                </el-table-column>
+                <el-table-column label="停用状态" width="80px">
+                    <template scope="scope">
+                        <el-switch
+                                v-model="scope.row.isUse"
+                                :active-value="0" :inactive-value="1" active-color="#13ce66"
+                                inactive-color="#ff4949"
+                                @change="handleDelete(scope.$index, scope.row)"
+                        >
+                        </el-switch>
+                    </template>
+                </el-table-column>
+                <el-table-column label="编辑" width="80px">
+                    <template scope="scope">
+                        <el-button
+                                size="small"
+                                type="primary"
+                                @click="handleEdit(scope.$index, scope.row)">编辑
+                        </el-button>
+                    </template>
+                </el-table-column>
+                <el-table-column label="授权">
+                    <template scope="scope">
+                        <el-button
+                                size="small"
+                                type="info"
+                                @click="addPerms(scope.$index, scope.row)">权限
+                        </el-button>
+                        <el-button
+                                size="small"
+                                type="info"
+                                @click="addUsers(scope.$index, scope.row)">用户
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-main>
+        <el-footer height="40px">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+            </el-pagination>
+        </el-footer>
+    </el-container>
+
+</div>
+<script>
+    var vue = new Vue({
+        mixins: [commonJsMixin,pageQueryJsMixin],
+        el: "#app",
+        data: {
+            //请求的URL
+            url: ctx + 'spv/sys/roleManager',
+            tempEntity: {}
+        },
+        methods: {
+            //从服务器读取数据
+            loadData: function (condition, currentPage, pageSize) {
+                this.$http.post(this.url + '/getRoles', {
+                    currentPage: currentPage,
+                    pageSize: pageSize,
+                    condition: condition
+                }).then(function (res) {
+                    //console.log("返回信息:",res);
+                    this.tableData = res.data.obj.list;
+                    this.totalCount = res.data.obj.total;
+                }, function () {
+                    console.log('failed');
+                });
+            },
+            //搜索
+            search: function () {
+                this.loadData(this.condition, this.currentPage, this.pageSize);
+            },
+            //添加
+            add: function () {
+                this.parentWindowEdit();
+            },
+
+            //单行编辑
+            handleEdit: function (index, row) {
+                this.tempEntity=row;
+                this.parentWindowEdit(this.tempEntity);
+            },
+            parentWindowEdit:function (tempEntity) {
+                var  title;
+                var  type;
+                if(tempEntity){
+                    title="修改",
+                    type="edit";
+                }else {
+                    title="新增",
+                    type="add";
+                }
+                layer.open({
+                //top.layer.open({
+                    type: 2,
+                    title: title,
+                    maxmin: true,
+                    area: ['650px', '400px'],
+                    moveOut: true,
+                    content: ctx + 'spv/sys/roleManager/roleDetail?type='+type,
+                    btn: ['确定', '取消'],
+                    success: function(layero, index){
+                        //var iframeWin = window[layero.find('iframe')[0]['name']]; //得到iframe页的窗口对象，执行iframe页的方法：iframeWin.method();
+                        ///var iframeWin=window['layui-layer-iframe' + index].window;
+                        var iframeWin=window['layui-layer-iframe' + index].window;
+                        if(tempEntity){
+                            iframeWin.vue.$data.tempEntity=tempEntity;
+                        }else{
+                            iframeWin.vue.$data.tempEntity={roleName:"XX",insertTime:new Date()};
+                        }
+                    },
+                    //窗口关闭
+                    end: function(){
+                        //vue.loadData(vue.condition, vue.currentPage, vue.pageSize);
+                    },
+                    //对应layer 本身的按钮事件
+                    yes: function(index, layero){
+                        var body = top.layer.getChildFrame('body', index); //取弹出层的body
+                        //var commitForm = body.find('#formRoleDetail');//获取子页面
+                        //var formData = commitForm.serialize();
+                       // console.log("formData:",formData);
+                        //原生例子 如果不是parent.layer 用如下获取
+                        //var iframeWin = window[layero.find('iframe')[0]['name']];
+                        var iframeWin=top.window['layui-layer-iframe' + index].window;
+                        vue.tempEntity=iframeWin.vue.$data.tempEntity;
+                       //console.log(iframeWin);
+                        //console.log(iframeWin.vue);
+                        //console.log("ddd",iframeWin.vue.$data.tempEntity);
+                        /*var flag = iframeWin.saveAndclose();//也可以父页面调用子页面的保存
+                        if (flag) {
+                        }*/
+                        vue.$http.post(vue.url + '/setRole', { "tempEntity": vue.tempEntity}).then(function (res) {
+                            this.commonAlert(res);
+                            console.log(">>>.",res.data.code);
+                            if(res.data.code=='1000') {
+                                top.layer.close(index);
+                                vue.loadData(vue.condition, vue.currentPage, vue.pageSize);
+                            }else{
+                                return false;
+                            }
+                        }, function () {
+                            console.log('failed');
+                        });
+
+                    }, btn1: function (index) {
+                        top.layer.close(index);
+                    }
+                });
+                
+            },
+
+            //单行停用 启用
+            handleDelete: function (index, row) {
+                this.$message({
+                    showClose: true,
+                    message: "待完善",
+                    type: 'success'
+                });
+            },
+            addPerms :function (index, row) {
+                this.$message({
+                    showClose: true,
+                    message: "待完善",
+                    type: 'success'
+                });
+            },
+            addUsers :function (index, row) {
+                this.$message({
+                    showClose: true,
+                    message: "待完善",
+                    type: 'success'
+                });
+            },
+            //多项删除
+            deleteIds: function () {
+                this.$message({
+                    showClose: true,
+                    message: "待完善",
+                    type: 'success'
+                });
+            },
+
+        },
+    });
+    //载入数据
+    vue.loadData(vue.condition, vue.currentPage, vue.pageSize);
+
+</script>
+
+</body>
+</html>

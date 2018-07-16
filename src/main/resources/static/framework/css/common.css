@@ -1,0 +1,46 @@
+*, *:after, *:before { -webkit-box-sizing: border-box; box-sizing: border-box; }
+.clearfix:before, .clearfix:after { content: ''; display: table; }
+.clearfix:after { clear: both; }
+html,body,#app {height: 100%;}
+body {
+	background: #fff;
+	color: #383a3c;
+	font-weight: 400;
+	font-size: 1em;
+	line-height: 1.25;
+	font-family: 'Raleway', Calibri, Arial, sans-serif;
+}
+.el-header, .el-footer {
+	padding: 0;
+}
+.el-main {
+	padding: 1px;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+}
+a, button {
+	outline: none;
+}
+a {
+	color: #ffffff;
+}
+a:hover, a:focus {
+	color: #34495e;
+}
+.layui-layer-btn {
+	text-align: center;
+}
+.layui-layer-btn0{
+	background-color: #409EFF;
+	border-color: #409EFF;
+}
+.layui-layer-btn a{
+	height: initial;
+	line-height: initial;
+	font-size: 12px;
+	font-weight: 500;
+	margin: 0px 5px 0px;
+	padding: 8px 15px;
+	border-radius: 3px;
+}

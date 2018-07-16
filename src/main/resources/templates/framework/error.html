@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html  xmlns:th="http://www.thymeleaf.org">
+<head th:include="layoutSet :: htmlhead" th:with="title='spv后台管理'">
+    <meta charset="UTF-8"></meta>
+    <title th:text="${error.status}"></title>
+</head>
+<body>
+<div id="app">
+<el-alert
+        :title="errStatus"
+        type="error"
+        :description="errDesc"
+        show-icon="true"
+        :closable="false"
+>
+</el-alert>
+    <el-collapse accordion>
+        <el-collapse-item >
+            <template slot="title">
+                <span style="margin-left: 20px">错误详情</span><i class="header-icon el-icon-info"></i>
+            </template>
+            <div style="margin-left: 20px">
+            <span>>异常信息</span>
+            <div>{{errException}}</div>
+            <span>>通知信息</span>
+            <div>{{errMessage}}</div>
+            <span>>错误路径</span>
+            <div>{{errPath}}</div>
+            </div>
+        </el-collapse-item>
+    </el-collapse>
+</div>
+<script th:inline="javascript">
+    var vue = new Vue({
+        el:"#app",
+        data: {
+            errStatus : [[${error.status}]],//错误代码
+            errError : [[${error.error}]],//错误英文简述
+            errMsg : [[${error.msg}]],//错误汉语简述
+            errTime : [[${error.timestamp}]],//错误时间
+            errException : [[${error.exception}]],//异常
+            errMessage : [[${error.message}]],//
+            errPath : [[${error.path}]],//异常路径
+
+            errDesc:[[${error.error}]] + "  "+ [[${error.msg}]],
+        }
+    })
+</script>
+</body>
+</html>

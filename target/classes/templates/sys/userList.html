@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head th:include="layoutSet :: htmlhead" th:with="title='用户管理'"></head>
+<style>
+</style>
+<body>
+<div id="app">
+    <el-container style="height: 100%" direction="vertical">
+        <el-header height="50px" style="margin: 10px;">
+            <el-form :inline="true" :model="condition" class="demo-form-inline" label-width="80px">
+                <el-form-item label="用户名:">
+                    <el-input v-model="condition.username" placeholder="用户名" clearable></el-input>
+                </el-form-item>
+                <el-form-item label="手机号:">
+                    <el-input v-model="condition.mobile" placeholder="手机号" clearable></el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
+                    <el-button icon="el-icon-plus" @click="add">新增</el-button>
+                    <el-button icon="el-icon-delete" @click="deleteIds">停用</el-button>
+                    <el-button icon="el-icon-share" @click="testRest">测试REST</el-button>
+                </el-form-item>
+            </el-form>
+        </el-header>
+        <el-main>
+            <el-table
+                    ref="testTable"
+                    :data="tableData"
+                    style="width:100%"
+                    border
+                    :default-sort="{prop: 'username', order: 'ascending'}"
+                    @selection-change="handleSelectionChange"
+                    :row-class-name="tableRowClassName"
+                    height="100%"
+                    highlight-current-row
+                    size="small "
+            >
+                <el-table-column type="selection">
+                </el-table-column>
+                <el-table-column
+                        prop="username"
+                        label="用户名"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="fullname"
+                        label="用户全称"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="mobile"
+                        label="手机号"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="email"
+                        label="邮箱"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="insertTime"
+                        label="创建时间"
+                        :formatter="dateFormat"
+                        sortable>
+                </el-table-column>
+                <el-table-column
+                        prop="updateTime"
+                        label="修改时间"
+                        :formatter="dateFormat"
+                        sortable>
+                    </tempUserlate>
+                </el-table-column>
+                <el-table-column label="停用状态" width="80px">
+                    <template scope="scope">
+                        <el-switch
+                                v-model="scope.row.isDel"
+                                :active-value="false" :inactive-value="true" active-color="#13ce66"
+                                inactive-color="#ff4949"
+                                @change="handleDelete(scope.$index, scope.row)"
+                        >
+                        </el-switch>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="180px">
+                    <template scope="scope">
+                        <el-button
+                                size="small"
+                                type="primary"
+                                @click="handleEdit(scope.$index, scope.row)">编辑
+                        </el-button>
+                        <el-button
+                                size="small"
+                                @click="handleChangePwd(scope.$index, scope.row)">修改密码
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-main>
+        <el-footer height="40px">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
+            </el-pagination>
+        </el-footer>
+    </el-container>
+    <el-dialog :title="dialogStatus" :visible.sync="dialogFormVisible">
+        <el-form :rules="rules" ref="dataForm" :model="tempUser" label-position="right" label-width="90px" label-suffix=":" size="small "
+                 style='width: 500px; margin-left:20px;'>
+            <el-row>
+                <el-col :span="12">
+                    <el-form-item label="名称" prop="username">
+                        <el-input v-model="tempUser.username"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="手机号" prop="mobile" >
+                        <el-input v-model="tempUser.mobile"></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">
+                    <el-form-item label="用户全称" prop="fullname">
+                        <el-input v-model="tempUser.fullname"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="邮箱" prop="email" >
+                        <el-input v-model="tempUser.email"></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">
+                    <el-form-item label="创建人" prop="insertUid" >
+                        <el-input v-model="tempUser.insertUname" :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="创建时间" prop="insertTime" >
+                        <el-date-picker
+                                v-model="tempUser.insertTime"
+                                type="date"
+                                placeholder="创建时间" :disabled="true" style="width: 160px">
+                        </el-date-picker>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row>
+                  <el-col :span="4" style="text-align: right;padding-right: 5px">
+                      <span>角色选择:</span>
+                  </el-col>
+                  <el-col :span="20" style="padding-left: 5px">
+                      <el-checkbox-group
+                              v-model="selectRoles" size="mini">
+                          <el-checkbox-button v-for="role in roles" :label="role.id" :key="role.id">{{role.roleName}}</el-checkbox-button>
+                      </el-checkbox-group>
+                  </el-col>
+              </el-row>
+            <el-row>
+            <el-alert
+                    title="默认密码:111111"
+                    type="info"
+                    close-text="知道了"v-if="dialogStatus=='create'" style="margin-top: 20px"></el-alert>
+            </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button v-if="dialogStatus=='create'" type="primary" @click="save">确定</el-button>
+            <el-button v-else type="primary" @click="save">保存</el-button>
+        </div>
+    </el-dialog>
+</div>
+<script>
+    var vue = new Vue({
+        mixins: [commonJsMixin,pageQueryJsMixin],
+        el: "#app",
+        data: {
+            //请求的URL
+            url: ctx + 'spv/sys/userManager',
+            //弹出窗口
+            dialogFormVisible: false,
+            tempUser: {},
+            num: 'dd',
+            dialogStatus: "create",
+            rules: {
+                username: [{required: true, message: '用户名必填', trigger: 'blur'}]
+            },
+             selectRoles: [],
+             roles: []
+        },
+
+        methods: {
+            //从服务器读取数据
+            loadData: function (condition, currentPage, pageSize) {
+                this.$http.post(this.url + '/getUsers', {
+                    currentPage: currentPage,
+                    pageSize: pageSize,
+                    condition: condition
+                }).then(function (res) {
+                    console.log("返回信息:",res);
+                    this.tableData = res.data.obj.list;
+                    this.totalCount = res.data.obj.total;
+                }, function () {
+                    console.log('failed');
+                });
+            },
+            //搜索
+            search: function () {
+                this.loadData(this.condition, this.currentPage, this.pageSize);
+            },
+
+            //添加
+            add: function () {
+                this.resetTempUser();
+                this.dialogStatus = 'create';
+                this.dialogFormVisible = true;
+                this.resetSelectRoleS(-1);
+                this.$nextTick(() => {
+                    this.$refs['dataForm'].clearValidate();
+                });
+            },
+            resetTempUser() {
+                this.tempUser = {
+                    id: undefined,
+                    insertTime: new Date(),
+                    username: '',
+                    insertUid: userView.id
+                }
+                this.tempUser.insertUname=userView.fullname;
+            },
+             resetSelectRoleS(id) {
+                  this.$http.post(this.url + '/getUserRole', {id:id}).then(function (res) {
+                      this.isLogin(res);
+                      //this.selectRoles=res.data.objs.selectRoles;
+                      this.roles=res.data.objs.roles;
+                      console.log(this.roles);
+                      this.selectRoles=[];//清空
+                      res.data.objs.selectRoles.map((v) => {
+                          this.selectRoles.push(v.roleId)
+                      })
+                  });
+              },
+            save: function () {
+                this.$http.post(this.url + '/setUser', {"selectRoles": this.selectRoles, "tempUser": this.tempUser}).then(function (res) {
+                    this.commonAlert(res);
+                    if(res.data.code=='1000') {
+                        this.dialogFormVisible = false;
+                        this.loadData(this.condition, this.currentPage, this.pageSize);
+                    }
+                }, function () {
+                    console.log('failed');
+                });
+            },
+            //单行编辑
+            handleEdit: function (index, row) {
+                this.tempUser=row;
+                this.dialogStatus = 'edit';
+                this.dialogFormVisible = true;
+                this.resetSelectRoleS(row.id);
+                this.$nextTick(() => {
+                    this.$refs['dataForm'].clearValidate();
+                });
+                this.$http.post(ctx + 'sysDrop/getValueByCode', {"typeCode": "SPV.USER_NAME","paramCode":this.tempUser.insertUid}).then(function (res) {
+                    this.tempUser.insertUname=res.data;
+                });
+            },
+            //单行停用 启用
+            handleDelete: function (index, row) {
+                var array = [];
+                array.push(row.id);
+                this.$http.post(this.url + '/delUser', {"deleteIds": array,delType:row.isDel}).then(function (res) {
+                    this.commonAlert(res);
+                    this.loadData(this.condition, this.currentPage, this.pageSize);
+                });
+            },
+            handleChangePwd: function (index, row) {
+                this.$prompt('请输入密码', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                }).then(({ value }) => {
+                    if(value==''||value==null)
+                        return;
+                    this.$http.post(this.url + '/setPwd',{"id":row.id,"pwd":value,"oldPwd":row.password}).then(function(res){
+                        this.commonAlert(res);
+                        //this.loadData(this.criteria, this.currentPage, this.pagesize);
+                    },function(){
+                        console.log('failed');
+                    });
+                }).catch(() => {
+                });
+            },
+
+            //多项删除
+            deleteIds: function () {
+                if (this.multipleSelection.length == 0)
+                    return;
+                var array = [];
+                this.multipleSelection.forEach((item) => {
+                    array.push(item.id);
+                })
+                this.$http.post(this.url + '/delUser', {"deleteIds": array,"delType":true}).then(function (res) {
+                    this.commonAlert(res);
+                    this.loadData(this.condition, this.currentPage, this.pageSize);
+                }, function () {
+                    console.log('failed');
+                });
+            },
+            //测试
+            testRest: function () {
+                alert(this.num);
+                this.$http.post(this.url + '/createUser', {id:1,username:3}).then(function (res) {
+                    alert(res.data);
+                    console.log(res);
+                });
+            }
+
+        },
+    });
+    //载入数据
+    vue.loadData(vue.condition, vue.currentPage, vue.pageSize);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head th:include="layoutSet :: htmlhead" th:with="title='角色详情'"></head>
+<style>
+</style>
+<body>
+<div id="app">
+    <el-container style="height: 100%" direction="vertical">
+        <el-form  id="formRoleDetail" :rules="rules" ref="dataForm" :model="tempEntity" label-position="right" label-width="90px" label-suffix=":" size="small "
+                 style='width: 600px; margin:20px;'>
+            <el-row>
+                <el-col :span="12">
+                    <el-form-item label="角色名称" prop="roleName">
+                        <el-input v-model="tempEntity.roleName"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="角色编号" prop="code" >
+                        <el-input v-model="tempEntity.code"></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">
+                    <el-form-item label="角色说明" prop="descpt" >
+                        <el-input v-model="tempEntity.descpt"></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="12">
+                    <el-form-item label="创建人" prop="insertUid" >
+                        <el-input v-model="insertUname" :disabled="true"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="创建时间" prop="insertTime" >
+                        <el-date-picker
+                                v-model="tempEntity.insertTime"
+                                type="date"
+                                placeholder="创建时间" :disabled="true" style="width: 160px">
+                        </el-date-picker>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+
+            <el-row type="flex" justify="center">
+                    <el-button  type="primary" @click="saveAndClose" size="small ">保存(子页面)</el-button>
+                    <el-button  type="primary" @click="close" size="small ">取消(子页面)</el-button>
+                    <!--<el-button v-else type="primary" @click="save">保存</el-button>-->
+            </el-row>
+
+            <el-row align="middle" justify="center">
+                <el-alert
+                        title="layer弹出窗口示例，包括本页面保存、父页面保存;其中top 打开子页面无法找到原始父页面，所以不能调用父"
+                        type="info"
+                        close-text="知道了"  style="margin-top: 20px"></el-alert>
+            </el-row>
+        </el-form>
+
+    </el-container>
+</div>
+<script>
+    function a(){
+        alert(1111)
+    }
+    var vue = new Vue({
+        mixins: [commonJsMixin],
+        el: "#app",
+        data: {
+            //请求的URL
+            url: ctx + 'spv/sys/roleManager',
+            tempEntity: {},
+            insertUname:'',
+            rules: {
+                roleName: [{required: true, message: '角色名称必填', trigger: 'blur'}]
+            },
+        },
+        mounted() {
+            this.insertUname=userView.username;
+        },
+        methods: {
+            saveAndClose: function () {
+                this.save();
+                this.close();
+            },
+            save: function () {
+                this.$http.post(this.url + '/setRole', { "tempEntity": this.tempEntity}).then(function (res) {
+                    this.commonAlert(res);
+                    if(res.data.code=='1000') {
+                        window.parent.vue.search();;//访问父页面方法 layer必须原生打开 不能是 top. 或者parent.
+                    }
+                }, function () {
+                    console.log('failed');
+                });
+            },
+            close: function (){
+                var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引 top
+                parent.layer.close(index); //再执行关闭
+            }
+        },
+    });
+
+</script>
+
+</body>
+</html>
